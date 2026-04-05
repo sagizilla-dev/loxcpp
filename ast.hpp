@@ -19,21 +19,21 @@ virtual std::any accept(Visitor* visitor) = 0;
 };
 class BinaryExpr: public Expr{
 public:
-	BinaryExpr(Expr* left, Expr* right, Token* op): left(left), right(right), op(op) {
+	BinaryExpr(Expr* left, Expr* right, Token op): left(left), right(right), op(op) {
 	}
 	Expr* left;
 	Expr* right;
-	Token* op;
+	Token op;
 	std::any accept(Visitor* visitor) override {
 		return visitor->visitBinaryExpr(this);
 	}
 };
 class UnaryExpr: public Expr{
 public:
-	UnaryExpr(Expr* expr, Token* op): expr(expr), op(op) {
+	UnaryExpr(Expr* expr, Token op): expr(expr), op(op) {
 	}
 	Expr* expr;
-	Token* op;
+	Token op;
 	std::any accept(Visitor* visitor) override {
 		return visitor->visitUnaryExpr(this);
 	}

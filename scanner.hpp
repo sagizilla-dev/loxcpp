@@ -53,7 +53,7 @@ struct Scanner {
             }
             tokens.push_back(Token(END, "", std::any{}, line));
         } catch (const ScannerError& e) {
-            std::cout<<e.what()<<'\n';
+            std::cerr<<e.what()<<'\n';
         }
     }
     void scanToken() {

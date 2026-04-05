@@ -11,11 +11,37 @@
     grouping -> "(" expr ")";
     unary    -> ("!" | "-") expr;
     operator -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
+
+    To avoid ambiguity during parsing and introduce operators precedence we redefine it:
+
+    expr        -> equality;
+    equality    -> comparison ( ( "==" | "!=" ) comparison )*;
+    comparison  -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
+    term        -> factor ( ( "+" | "-" ) factor )*;
+    factor      -> unary ( ( "/" | "*" ) unary )*;
+    unary       -> ( ("!" | "-") unary ) | primary;
+    primary     -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" );
 */
 
 using astTypes = std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
 
+void defineVisitor(std::ofstream& file, std::string baseName, std::vector<astTypes> types) {
+    // forward declaration
+    for (auto type: types) {
+        file<<"class "<<type.first<<baseName<<";\n";
+    }
+
+    file<<"class Visitor {\n";
+    file<<"public:\n";
+    for (auto type: types) {
+        file<<"\tvirtual std::any visit"<<type.first<<baseName<<"("<<type.first<<baseName<<"* expr) = 0;\n";
+    }
+    file<<"};\n";
+}
 void defineAST(std::ofstream& file, std::string baseName, std::vector<astTypes> types) {
+    // define visitor first due to forward declaration
+    defineVisitor(file, baseName, types);
+
     file<<"class "<<baseName<<" {\n";
     file<<"public:\n";
     file<<"virtual std::any accept(Visitor* visitor) = 0;\n";
@@ -49,34 +75,15 @@ void defineAST(std::ofstream& file, std::string baseName, std::vector<astTypes> 
         file<<"};\n";
     }
 }
-void defineVisitor(std::ofstream& file, std::string baseName, std::vector<astTypes> types) {
-    // forward declaration
-    for (auto type: types) {
-        file<<"class "<<type.first<<baseName<<";\n";
-    }
-
-    file<<"class Visitor {\n";
-    file<<"public:\n";
-    for (auto type: types) {
-        file<<"\tvirtual std::any visit"<<type.first<<baseName<<"("<<type.first<<baseName<<"* expr) = 0;\n";
-    }
-    file<<"};\n";
-}
 int main() {
     std::ofstream file("../ast.hpp");
     file << "#pragma once\n";
     file << "#include \"config.hpp\"\n";
     file << "#include \"common.hpp\"\n";
     file << "#include \"token.hpp\"\n";
-    defineVisitor(file, "Expr", {
-        {"Binary", {{"Expr*", "left"}, {"Expr*", "right"}, {"Token*", "op"}}},
-        {"Unary", {{"Expr*", "expr"}, {"Token*", "op"}}},
-        {"Grouping", {{"Expr*", "expr"}}},
-        {"Literal", {{"std::any", "value"}}},
-    });
     defineAST(file, "Expr", {
-        {"Binary", {{"Expr*", "left"}, {"Expr*", "right"}, {"Token*", "op"}}},
-        {"Unary", {{"Expr*", "expr"}, {"Token*", "op"}}},
+        {"Binary", {{"Expr*", "left"}, {"Expr*", "right"}, {"Token", "op"}}},
+        {"Unary", {{"Expr*", "expr"}, {"Token", "op"}}},
         {"Grouping", {{"Expr*", "expr"}}},
         {"Literal", {{"std::any", "value"}}},
     });

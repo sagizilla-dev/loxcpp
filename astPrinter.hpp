@@ -11,7 +11,7 @@ public:
         std::cout<<'\n';
     }
     std::any visitBinaryExpr(BinaryExpr* expr) override {
-        parenthesize(expr->op->lexeme, {expr->left, expr->right});
+        parenthesize(expr->op.lexeme, {expr->left, expr->right});
         return std::any{};
     }
     std::any visitGroupingExpr(GroupingExpr* expr) override {
@@ -19,7 +19,7 @@ public:
         return std::any{};
     };
     std::any visitUnaryExpr(UnaryExpr* expr) override {
-        parenthesize(expr->op->lexeme, {expr->expr});
+        parenthesize(expr->op.lexeme, {expr->expr});
         return std::any{};
     }
     std::any visitLiteralExpr(LiteralExpr* expr) override {
