@@ -25,7 +25,7 @@ struct Token {
     int line;
     Token(TOKEN_TYPE type, std::string lexeme, std::any literal, int line):
     type(type), lexeme(lexeme), literal(literal), line(line) {
-
+        
     }
     std::string toString() {
         std::string str = "(type " + std::to_string(type) + ", line " + std::to_string(line) + ") -> " + lexeme;
