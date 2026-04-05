@@ -20,4 +20,7 @@ int main(int argc, char** argv) {
     astPrinter.print(expr);
     Interpreter interpreter;
     interpreter.interpret(expr);
+    if (RuntimeError::errorFound) {
+        exit(1);
+    }
 }

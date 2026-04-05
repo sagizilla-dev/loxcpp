@@ -12,7 +12,7 @@ public:
     static bool errorFound;
     RuntimeError(int line, std::string errorMessage): line(line), errorMessage(errorMessage) {
         errorFound = true;
-        message = "Syntax error[" + std::to_string(line)+"] -> " + errorMessage;
+        message = "Runtime error[" + std::to_string(line)+"] -> " + errorMessage;
     }
     const char* what() const noexcept override {
         return message.c_str();
@@ -67,10 +67,10 @@ public:
                 return std::any_cast<double>(left)*std::any_cast<double>(right);
             }
             case (PLUS): {
-                if (left.type()==typeid(double) && left.type()==typeid(double)) {
+                if (left.type()==typeid(double) && right.type()==typeid(double)) {
                     return std::any_cast<double>(left)+std::any_cast<double>(right);
                 }
-                if (left.type()==typeid(std::string) && left.type()==typeid(std::string)) {
+                if (left.type()==typeid(std::string) && right.type()==typeid(std::string)) {
                     return std::any_cast<std::string>(left)+std::any_cast<std::string>(right);
                 }
                 throw RuntimeError(expr->op.line, "Operands must be two numbers or strings");
