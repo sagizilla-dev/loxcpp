@@ -28,8 +28,6 @@ public:
                 std::cout<<std::any_cast<std::string>(expr->value);
             } else if (expr->value.type()==typeid(double)) {
                 std::cout<<std::any_cast<double>(expr->value);
-            } else if (expr->value.type()==typeid(int)) {
-                std::cout<<std::any_cast<int>(expr->value);
             }
             return std::any{};
         }
