@@ -3,4 +3,4 @@
 a big comment
 block!
 */
-6/3-1
+"hello " + "world"
