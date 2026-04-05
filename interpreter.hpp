@@ -20,12 +20,13 @@ public:
 };
 bool RuntimeError::errorFound = false;
 
-class Interpreter: public Visitor {
+class Interpreter: public ExprVisitor, public StmtVisitor {
 public:
-    void interpret(Expr* expr) {
+    void interpret(std::vector<Stmt*> statements) {
         try {
-            std::any value = evaluate(expr);
-            std::cout<<stringify(value)<<'\n';
+            for (auto stmt: statements) {
+                execute(stmt);
+            }
         } catch (const RuntimeError& e) {
             std::cerr<<e.what()<<'\n';
         }
@@ -60,6 +61,9 @@ public:
             }
             case (SLASH): {
                 checkNumberOperands(expr->op, left, right);
+                if (std::any_cast<double>(right)==0.0) {
+                    throw RuntimeError(expr->op.line, "Division by zero");
+                }
                 return std::any_cast<double>(left)/std::any_cast<double>(right);
             }
             case (STAR): {
@@ -131,6 +135,16 @@ public:
                 return !isTruthy(value);
             }
         }
+        return std::any{}; // unreachable
+    }
+    std::any visitExpressionStmt(ExpressionStmt* stmt) override {
+        evaluate(stmt->expr);
+        return std::any{};
+    }
+    std::any visitPrintStmt(PrintStmt* stmt) override {
+        std::any value = evaluate(stmt->expr);
+        std::cout<<stringify(value)<<'\n';
+        return std::any{};
     }
     void checkNumberOperands(Token op, std::any value1, std::any value2) {
         if (value1.type()!=typeid(double) || value2.type()!=typeid(double)) {
@@ -157,5 +171,8 @@ public:
     }
     std::any evaluate(Expr* expr) {
         return expr->accept(this);
+    }
+    void execute(Stmt* stmt) {
+        stmt->accept(this);
     }
 };

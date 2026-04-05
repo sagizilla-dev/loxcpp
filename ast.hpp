@@ -6,7 +6,7 @@ class BinaryExpr;
 class UnaryExpr;
 class GroupingExpr;
 class LiteralExpr;
-class Visitor {
+class ExprVisitor {
 public:
 	virtual std::any visitBinaryExpr(BinaryExpr* expr) = 0;
 	virtual std::any visitUnaryExpr(UnaryExpr* expr) = 0;
@@ -15,7 +15,7 @@ public:
 };
 class Expr {
 public:
-virtual std::any accept(Visitor* visitor) = 0;
+	virtual std::any accept(ExprVisitor* visitor) = 0;
 };
 class BinaryExpr: public Expr{
 public:
@@ -24,7 +24,7 @@ public:
 	Expr* left;
 	Expr* right;
 	Token op;
-	std::any accept(Visitor* visitor) override {
+	std::any accept(ExprVisitor* visitor) override {
 		return visitor->visitBinaryExpr(this);
 	}
 };
@@ -34,7 +34,7 @@ public:
 	}
 	Expr* expr;
 	Token op;
-	std::any accept(Visitor* visitor) override {
+	std::any accept(ExprVisitor* visitor) override {
 		return visitor->visitUnaryExpr(this);
 	}
 };
@@ -43,7 +43,7 @@ public:
 	GroupingExpr(Expr* expr): expr(expr) {
 	}
 	Expr* expr;
-	std::any accept(Visitor* visitor) override {
+	std::any accept(ExprVisitor* visitor) override {
 		return visitor->visitGroupingExpr(this);
 	}
 };
@@ -52,7 +52,36 @@ public:
 	LiteralExpr(std::any value): value(value) {
 	}
 	std::any value;
-	std::any accept(Visitor* visitor) override {
+	std::any accept(ExprVisitor* visitor) override {
 		return visitor->visitLiteralExpr(this);
+	}
+};
+class PrintStmt;
+class ExpressionStmt;
+class StmtVisitor {
+public:
+	virtual std::any visitPrintStmt(PrintStmt* expr) = 0;
+	virtual std::any visitExpressionStmt(ExpressionStmt* expr) = 0;
+};
+class Stmt {
+public:
+	virtual std::any accept(StmtVisitor* visitor) = 0;
+};
+class PrintStmt: public Stmt{
+public:
+	PrintStmt(Expr* expr): expr(expr) {
+	}
+	Expr* expr;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitPrintStmt(this);
+	}
+};
+class ExpressionStmt: public Stmt{
+public:
+	ExpressionStmt(Expr* expr): expr(expr) {
+	}
+	Expr* expr;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitExpressionStmt(this);
 	}
 };

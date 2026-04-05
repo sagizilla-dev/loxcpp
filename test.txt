@@ -3,4 +3,4 @@
 a big comment
 block!
 */
-!2
+print "Hello world";

@@ -4,7 +4,7 @@
 #include "token.hpp"
 #include "ast.hpp"
 
-class ASTPrinter: public Visitor {
+class ASTPrinter: public ExprVisitor {
 public:
     void print(Expr* expr) {
         expr->accept(this);

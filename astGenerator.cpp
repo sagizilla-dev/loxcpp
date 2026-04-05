@@ -14,13 +14,17 @@
 
     To avoid ambiguity during parsing and introduce operators precedence we redefine it:
 
-    expr        -> equality;
-    equality    -> comparison ( ( "==" | "!=" ) comparison )*;
-    comparison  -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
-    term        -> factor ( ( "+" | "-" ) factor )*;
-    factor      -> unary ( ( "/" | "*" ) unary )*;
-    unary       -> ( ("!" | "-") unary ) | primary;
-    primary     -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" );
+    program         -> statement* END;
+    statement       -> exprStatement | printStatement;
+    exprStatement   -> expr ";";
+    printStatement  -> "print" expr ";";
+    expr            -> equality;
+    equality        -> comparison ( ( "==" | "!=" ) comparison )*;
+    comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
+    term            -> factor ( ( "+" | "-" ) factor )*;
+    factor          -> unary ( ( "/" | "*" ) unary )*;
+    unary           -> ( ("!" | "-") unary ) | primary;
+    primary         -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" );
 */
 
 using astTypes = std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
@@ -31,7 +35,7 @@ void defineVisitor(std::ofstream& file, std::string baseName, std::vector<astTyp
         file<<"class "<<type.first<<baseName<<";\n";
     }
 
-    file<<"class Visitor {\n";
+    file<<"class "<<baseName<<"Visitor {\n";
     file<<"public:\n";
     for (auto type: types) {
         file<<"\tvirtual std::any visit"<<type.first<<baseName<<"("<<type.first<<baseName<<"* expr) = 0;\n";
@@ -44,7 +48,7 @@ void defineAST(std::ofstream& file, std::string baseName, std::vector<astTypes> 
 
     file<<"class "<<baseName<<" {\n";
     file<<"public:\n";
-    file<<"virtual std::any accept(Visitor* visitor) = 0;\n";
+    file<<"\tvirtual std::any accept("<<baseName<<"Visitor* visitor) = 0;\n";
     file<<"};\n";
     for (auto type: types) {
         file<<"class "<<type.first<<baseName<<": public " <<baseName<< "{\n";
@@ -69,7 +73,7 @@ void defineAST(std::ofstream& file, std::string baseName, std::vector<astTypes> 
         for (auto field: type.second) {
             file<<'\t'<<field.first<<" "<<field.second<<";\n";
         }
-        file<<"\tstd::any accept(Visitor* visitor) override {\n";
+        file<<"\tstd::any accept("<<baseName<<"Visitor* visitor) override {\n";
         file<<"\t\treturn visitor->visit"<<type.first<<baseName<<"(this);\n";
         file<<"\t}\n";
         file<<"};\n";
@@ -86,5 +90,9 @@ int main() {
         {"Unary", {{"Expr*", "expr"}, {"Token", "op"}}},
         {"Grouping", {{"Expr*", "expr"}}},
         {"Literal", {{"std::any", "value"}}},
+    });
+    defineAST(file, "Stmt", {
+        {"Print", {{"Expr*", "expr"}}},
+        {"Expression", {{"Expr*", "expr"}}}
     });
 }

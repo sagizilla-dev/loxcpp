@@ -1,7 +1,7 @@
 #include "config.hpp"
 #include "common.hpp"
 #include "scanner.hpp"
-#include "astPrinter.hpp"
+// #include "astPrinter.hpp"
 #include "parser.hpp"
 #include "interpreter.hpp"
 
@@ -12,14 +12,14 @@ int main(int argc, char** argv) {
         exit(1);
     }
     Parser parser(scanner.tokens);
-    Expr* expr = parser.parse();
+    std::vector<Stmt*> statements = parser.parse();
     if (SyntaxError::errorFound) {
         exit(1);
     }
-    ASTPrinter astPrinter;
-    astPrinter.print(expr);
+    // ASTPrinter astPrinter;
+    // astPrinter.print(expr);
     Interpreter interpreter;
-    interpreter.interpret(expr);
+    interpreter.interpret(statements);
     if (RuntimeError::errorFound) {
         exit(1);
     }

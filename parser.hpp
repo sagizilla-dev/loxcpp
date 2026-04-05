@@ -22,16 +22,35 @@ bool SyntaxError::errorFound = false;
 struct Parser {
     std::vector<Token> tokens;
     int current = 0;
+    std::vector<Stmt*> statements;
     Parser(std::vector<Token> tokens): tokens(tokens) {
 
     }
-    Expr* parse() {
+    std::vector<Stmt*> parse() {
         try {
-            return expression();
+            while (!isAtEnd()) {
+                statements.push_back(statement());
+            }
         } catch (const SyntaxError& e) {
             std::cerr<<e.what()<<'\n';
         }
-        return nullptr;
+        return statements;
+    }
+    Stmt* statement() {
+        if (match({PRINT})) {
+            return printStatement();
+        }
+        return expressionStatement();
+    }
+    Stmt* printStatement() {
+        Expr* value = expression();
+        consume(SEMICOLON, "Expected ; after statement");
+        return new PrintStmt(value);
+    }
+    Stmt* expressionStatement() {
+        Expr* value = expression();
+        consume(SEMICOLON, "Expected ; after statement");
+        return new ExpressionStmt(value);
     }
     Expr* expression() {
         return equality();
