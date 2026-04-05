@@ -1,14 +1,14 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-std::string readFile(std::string filename) {
-    std::ifstream file(filename);
-    std::stringstream stream;
-    stream << file.rdbuf();
-    return stream.str();
-}
+#include "config.hpp"
+#include "common.hpp"
+#include "scanner.hpp"
 
 int main(int argc, char** argv) {
-    std::cout<<readFile("../test.txt");
+    Scanner scanner(readFile("../test.txt"));
+    scanner.scan();
+    if (ScannerError::errorFound) {
+        exit(1);
+    }
+    for (auto token: scanner.tokens) {
+        std::cout<<token.toString()<<'\n';
+    }
 }
