@@ -2,22 +2,6 @@
 #include "config.hpp"
 #include "token.hpp"
 
-class ScannerError: public std::exception {
-public:
-    int line;
-    std::string message;
-    std::string errorMessage;
-    static bool errorFound;
-    ScannerError(int line, std::string errorMessage): line(line), errorMessage(errorMessage) {
-        errorFound = true;
-        message = "Scanner error[" + std::to_string(line)+"] -> " + errorMessage;
-    }
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-};
-bool ScannerError::errorFound = false;
-
 struct Scanner {
     std::string code;
     std::vector<Token> tokens;

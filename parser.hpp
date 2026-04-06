@@ -3,22 +3,6 @@
 #include "token.hpp"
 #include "ast.hpp"
 
-class SyntaxError: public std::exception {
-public:
-    int line;
-    std::string message;
-    std::string errorMessage;
-    static bool errorFound;
-    SyntaxError(int line, std::string errorMessage): line(line), errorMessage(errorMessage) {
-        errorFound = true;
-        message = "Syntax error[" + std::to_string(line)+"] -> " + errorMessage;
-    }
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-};
-bool SyntaxError::errorFound = false;
-
 struct Parser {
     std::vector<Token> tokens;
     int current = 0;
@@ -27,20 +11,49 @@ struct Parser {
 
     }
     std::vector<Stmt*> parse() {
-        try {
-            while (!isAtEnd()) {
-                statements.push_back(statement());
-            }
-        } catch (const SyntaxError& e) {
-            std::cerr<<e.what()<<'\n';
+        while (!isAtEnd()) {
+            statements.push_back(declaration());
         }
         return statements;
+    }
+    Stmt* declaration() {
+        try {
+            if (match({VAR})) {
+                return varDeclaration();
+            }
+            return statement();
+        } catch (const SyntaxError& e) {
+            std::cerr<<e.what()<<'\n';
+            // panic mode, we need to synchronize on a statement boundary
+            synchronize();
+            return nullptr;
+        }
+    }
+    Stmt* varDeclaration() {
+        Token name = consume(IDENTIFIER, "Expected variable name");
+        Expr* initializer = nullptr;
+        if (match({EQUAL})) {
+            initializer = expression();
+        }
+        consume(SEMICOLON, "Expected ; after statement");
+        return new VarDeclarationStmt(name, initializer);
     }
     Stmt* statement() {
         if (match({PRINT})) {
             return printStatement();
         }
+        if (match({LEFT_BRACE})) {
+            return new BlockStmt(blockStatement());
+        }
         return expressionStatement();
+    }
+    std::vector<Stmt*> blockStatement() {
+        std::vector<Stmt*> statements;
+        while (!isAtEnd() && !checkTokenType(RIGHT_BRACE)) {
+            statements.push_back(declaration());
+        }
+        consume(RIGHT_BRACE, "Expected } after block");
+        return statements;
     }
     Stmt* printStatement() {
         Expr* value = expression();
@@ -53,7 +66,29 @@ struct Parser {
         return new ExpressionStmt(value);
     }
     Expr* expression() {
-        return equality();
+        return assignment();
+    }
+    Expr* assignment() {
+        // assignment expression is tricky since the left-hand side might be any expression, and we don't
+        // know we are parsing an assignment expression until we stubmle upon =, which may occur however many tokens ahead
+        // i.e node.next.prev.prev.prev.value = 2;
+        // this is important since we cannot accept a program that does "a+b=2;"
+        // we must verify the left-hand side is an expression that is an l-value, not r-value
+        Expr* expr = equality();
+
+        if (match({EQUAL})) {
+            Token equals = previous();
+            Expr* value = assignment(); // this recursive call makes the whole operator right-associative
+            // dynamic cast checks if the expression was actually a variable expression
+            // if not, it is an error!
+            if (VariableExpr* var = dynamic_cast<VariableExpr*>(expr)) {
+                Token name = var->name;
+                return new AssignExpr(name, value);
+            }
+            throw SyntaxError(equals.line, "Invalid assignment target");
+        }
+        // every valid assignment target is also valid syntax as a normal expression
+        return expr;
     }
     Expr* equality() {
         Expr* left = comparison();
@@ -126,6 +161,9 @@ struct Parser {
             Expr* expr = expression();
             consume(RIGHT_PAREN, "Expected ) after expression");
             return new GroupingExpr(expr);
+        }
+        if (match({IDENTIFIER})) {
+            return new VariableExpr(previous());
         }
         throw SyntaxError(peek().line, "Expected expression");
     }

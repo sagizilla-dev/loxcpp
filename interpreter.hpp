@@ -3,25 +3,14 @@
 #include "common.hpp"
 #include "token.hpp"
 #include "ast.hpp"
-
-class RuntimeError: public std::exception {
-public:
-    int line;
-    std::string message;
-    std::string errorMessage;
-    static bool errorFound;
-    RuntimeError(int line, std::string errorMessage): line(line), errorMessage(errorMessage) {
-        errorFound = true;
-        message = "Runtime error[" + std::to_string(line)+"] -> " + errorMessage;
-    }
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-};
-bool RuntimeError::errorFound = false;
+#include "environment.hpp"
 
 class Interpreter: public ExprVisitor, public StmtVisitor {
 public:
+    Environment* env; // current environment, starts off as global
+    Interpreter() {
+        env = new Environment;
+    }
     void interpret(std::vector<Stmt*> statements) {
         try {
             for (auto stmt: statements) {
@@ -168,6 +157,40 @@ public:
     }
     std::any visitLiteralExpr(LiteralExpr* expr) override {
         return expr->value;
+    }
+    std::any visitVarDeclarationStmt(VarDeclarationStmt* stmt) override {
+        std::any value;
+        if (stmt->initializer) {
+            value = evaluate(stmt->initializer);
+        }
+        // if a variable has never been initiaized, we assign nil to it
+        env->define(stmt->name.lexeme, value);
+        return nullptr;
+    }
+    std::any visitVariableExpr(VariableExpr* expr) override {
+        return env->get(expr->name);
+    }
+    std::any visitAssignExpr(AssignExpr* expr) override {
+        std::any value = evaluate(expr->value);
+        env->assign(expr->name, value);
+        return value;
+    }
+    std::any visitBlockStmt(BlockStmt* stmt) override {
+        executeBlock(stmt->statements, new Environment(env));
+        return std::any{};
+    }
+    void executeBlock(std::vector<Stmt*> statements, Environment* environment) {
+        // save the previous environment to restore it once we exit the block
+        Environment* previous = this->env;
+        try {
+            this->env = environment;
+            for (auto stmt: statements) {
+                execute(stmt);
+            }
+        } catch(const RuntimeError& e) {
+            // should we synchronize here?
+        }
+        this->env = previous;
     }
     std::any evaluate(Expr* expr) {
         return expr->accept(this);

@@ -14,17 +14,21 @@
 
     To avoid ambiguity during parsing and introduce operators precedence we redefine it:
 
-    program         -> statement* END;
-    statement       -> exprStatement | printStatement;
+    program         -> declaration* END;
+    declaration     -> varDeclaration | statement;
+    varDeclaration  -> "var" IDENTIFIER ( "=" expr )? ";";
+    statement       -> exprStatement | printStatement | blockStatement;
     exprStatement   -> expr ";";
     printStatement  -> "print" expr ";";
-    expr            -> equality;
+    blockStatement  -> "{" declaration* "}";
+    expr            -> assignment;
+    assignment      -> ( IDENTIFIER "=" assignment ) | equality;
     equality        -> comparison ( ( "==" | "!=" ) comparison )*;
     comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
     term            -> factor ( ( "+" | "-" ) factor )*;
     factor          -> unary ( ( "/" | "*" ) unary )*;
     unary           -> ( ("!" | "-") unary ) | primary;
-    primary         -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" );
+    primary         -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" ) | IDENTIFIER;
 */
 
 using astTypes = std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
@@ -90,9 +94,13 @@ int main() {
         {"Unary", {{"Expr*", "expr"}, {"Token", "op"}}},
         {"Grouping", {{"Expr*", "expr"}}},
         {"Literal", {{"std::any", "value"}}},
+        {"Variable", {{"Token", "name"}}},
+        {"Assign", {{"Token", "name"}, {"Expr*", "value"}}}
     });
     defineAST(file, "Stmt", {
         {"Print", {{"Expr*", "expr"}}},
-        {"Expression", {{"Expr*", "expr"}}}
+        {"Expression", {{"Expr*", "expr"}}},
+        {"VarDeclaration", {{"Token", "name"}, {"Expr*", "initializer"}}},
+        {"Block", {{"std::vector<Stmt*>", "statements"}}}
     });
 }

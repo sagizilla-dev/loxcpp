@@ -6,12 +6,16 @@ class BinaryExpr;
 class UnaryExpr;
 class GroupingExpr;
 class LiteralExpr;
+class VariableExpr;
+class AssignExpr;
 class ExprVisitor {
 public:
 	virtual std::any visitBinaryExpr(BinaryExpr* expr) = 0;
 	virtual std::any visitUnaryExpr(UnaryExpr* expr) = 0;
 	virtual std::any visitGroupingExpr(GroupingExpr* expr) = 0;
 	virtual std::any visitLiteralExpr(LiteralExpr* expr) = 0;
+	virtual std::any visitVariableExpr(VariableExpr* expr) = 0;
+	virtual std::any visitAssignExpr(AssignExpr* expr) = 0;
 };
 class Expr {
 public:
@@ -56,12 +60,35 @@ public:
 		return visitor->visitLiteralExpr(this);
 	}
 };
+class VariableExpr: public Expr{
+public:
+	VariableExpr(Token name): name(name) {
+	}
+	Token name;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitVariableExpr(this);
+	}
+};
+class AssignExpr: public Expr{
+public:
+	AssignExpr(Token name, Expr* value): name(name), value(value) {
+	}
+	Token name;
+	Expr* value;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitAssignExpr(this);
+	}
+};
 class PrintStmt;
 class ExpressionStmt;
+class VarDeclarationStmt;
+class BlockStmt;
 class StmtVisitor {
 public:
 	virtual std::any visitPrintStmt(PrintStmt* expr) = 0;
 	virtual std::any visitExpressionStmt(ExpressionStmt* expr) = 0;
+	virtual std::any visitVarDeclarationStmt(VarDeclarationStmt* expr) = 0;
+	virtual std::any visitBlockStmt(BlockStmt* expr) = 0;
 };
 class Stmt {
 public:
@@ -83,5 +110,24 @@ public:
 	Expr* expr;
 	std::any accept(StmtVisitor* visitor) override {
 		return visitor->visitExpressionStmt(this);
+	}
+};
+class VarDeclarationStmt: public Stmt{
+public:
+	VarDeclarationStmt(Token name, Expr* initializer): name(name), initializer(initializer) {
+	}
+	Token name;
+	Expr* initializer;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitVarDeclarationStmt(this);
+	}
+};
+class BlockStmt: public Stmt{
+public:
+	BlockStmt(std::vector<Stmt*> statements): statements(statements) {
+	}
+	std::vector<Stmt*> statements;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitBlockStmt(this);
 	}
 };
