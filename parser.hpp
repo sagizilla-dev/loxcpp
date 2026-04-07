@@ -45,7 +45,27 @@ struct Parser {
         if (match({LEFT_BRACE})) {
             return new BlockStmt(blockStatement());
         }
+        if (match({IF})) {
+            return ifStatement();
+        }
         return expressionStatement();
+    }
+    Stmt* ifStatement() {
+        // this is needed to create separation between condition and actual thenStatement
+        // i.e if x*x*b=nullptr; is ambiguous since it can be parsed as
+        // if (x*x) *b=nullptr; 
+        // if (x) *x*b=nullptr;
+        consume(LEFT_PAREN, "Expected ( after 'if'");
+        Expr* condition = expression();
+        consume(RIGHT_PAREN, "Expected ) after if condition");
+        Stmt* thenStatement = statement();
+        Stmt* elseStatement = nullptr;
+        // this means the solution to the "dangling else problem" is that
+        // an else belongs to the nearest if statement
+        if (match({ELSE})) {
+            elseStatement = statement();
+        }
+        return new IfStmt(condition, thenStatement, elseStatement);
     }
     std::vector<Stmt*> blockStatement() {
         std::vector<Stmt*> statements;
@@ -74,11 +94,11 @@ struct Parser {
         // i.e node.next.prev.prev.prev.value = 2;
         // this is important since we cannot accept a program that does "a+b=2;"
         // we must verify the left-hand side is an expression that is an l-value, not r-value
-        Expr* expr = equality();
+        Expr* expr = orExpr();
 
         if (match({EQUAL})) {
             Token equals = previous();
-            Expr* value = assignment(); // this recursive call makes the whole operator right-associative
+            Expr* value = orExpr(); // this recursive call makes the whole operator right-associative
             // dynamic cast checks if the expression was actually a variable expression
             // if not, it is an error!
             if (VariableExpr* var = dynamic_cast<VariableExpr*>(expr)) {
@@ -89,6 +109,24 @@ struct Parser {
         }
         // every valid assignment target is also valid syntax as a normal expression
         return expr;
+    }
+    Expr* orExpr() {
+        Expr* left = andExpr();
+        if (match({OR})) {
+            Token op = previous();
+            Expr* right = andExpr();
+            left = new LogicExpr(left, right, op);
+        }
+        return left;
+    }
+    Expr* andExpr() {
+        Expr* left = equality();
+        if (match({AND})) {
+            Token op = previous();
+            Expr* right = equality();
+            right = new LogicExpr(left, right, op);
+        }
+        return left;
     }
     Expr* equality() {
         Expr* left = comparison();

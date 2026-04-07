@@ -17,12 +17,15 @@
     program         -> declaration* END;
     declaration     -> varDeclaration | statement;
     varDeclaration  -> "var" IDENTIFIER ( "=" expr )? ";";
-    statement       -> exprStatement | printStatement | blockStatement;
+    statement       -> exprStatement | printStatement | blockStatement | ifStatement;
+    ifStatement     -> "if" "(" expr ")" statement ( "else" statement )?;
     exprStatement   -> expr ";";
     printStatement  -> "print" expr ";";
     blockStatement  -> "{" declaration* "}";
     expr            -> assignment;
-    assignment      -> ( IDENTIFIER "=" assignment ) | equality;
+    assignment      -> ( IDENTIFIER "=" assignment ) | equality | logicOR;
+    logicOR         -> logicAND ( "or" logicAND )*;
+    logicAND        -> equality ( "and" equality )*;
     equality        -> comparison ( ( "==" | "!=" ) comparison )*;
     comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
     term            -> factor ( ( "+" | "-" ) factor )*;
@@ -95,12 +98,14 @@ int main() {
         {"Grouping", {{"Expr*", "expr"}}},
         {"Literal", {{"std::any", "value"}}},
         {"Variable", {{"Token", "name"}}},
-        {"Assign", {{"Token", "name"}, {"Expr*", "value"}}}
+        {"Assign", {{"Token", "name"}, {"Expr*", "value"}}},
+        {"Logic", {{"Expr*", "left"}, {"Expr*", "right"}, {"Token", "op"}}},
     });
     defineAST(file, "Stmt", {
         {"Print", {{"Expr*", "expr"}}},
         {"Expression", {{"Expr*", "expr"}}},
         {"VarDeclaration", {{"Token", "name"}, {"Expr*", "initializer"}}},
-        {"Block", {{"std::vector<Stmt*>", "statements"}}}
+        {"Block", {{"std::vector<Stmt*>", "statements"}}},
+        {"If", {{"Expr*", "condition"}, {"Stmt*", "thenStatement"}, {"Stmt*", "elseStatement"}}}
     });
 }

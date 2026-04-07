@@ -170,6 +170,30 @@ public:
     std::any visitVariableExpr(VariableExpr* expr) override {
         return env->get(expr->name);
     }
+    std::any visitIfStmt(IfStmt* stmt) override {
+        if (isTruthy(evaluate(stmt->condition))) {
+            execute(stmt->thenStatement);
+        } else if (stmt->elseStatement) {
+            execute(stmt->elseStatement);
+        }
+        return std::any{};
+    }
+    std::any visitLogicExpr(LogicExpr* expr) override {
+        std::any left = evaluate(expr->left);
+        // short-circuit evaluation
+        if (expr->op.type==OR) {
+            if (isTruthy(left)) {
+                // we return the result of the expression itself, so that
+                // ("hello" or nil) returns "hello" instead of pure true
+                return left;
+            }
+        } else {
+            if (!isTruthy(left)) {
+                return left;
+            }
+        }
+        return evaluate(expr->right);
+    }
     std::any visitAssignExpr(AssignExpr* expr) override {
         std::any value = evaluate(expr->value);
         env->assign(expr->name, value);

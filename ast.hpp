@@ -8,6 +8,7 @@ class GroupingExpr;
 class LiteralExpr;
 class VariableExpr;
 class AssignExpr;
+class LogicExpr;
 class ExprVisitor {
 public:
 	virtual std::any visitBinaryExpr(BinaryExpr* expr) = 0;
@@ -16,6 +17,7 @@ public:
 	virtual std::any visitLiteralExpr(LiteralExpr* expr) = 0;
 	virtual std::any visitVariableExpr(VariableExpr* expr) = 0;
 	virtual std::any visitAssignExpr(AssignExpr* expr) = 0;
+	virtual std::any visitLogicExpr(LogicExpr* expr) = 0;
 };
 class Expr {
 public:
@@ -79,16 +81,29 @@ public:
 		return visitor->visitAssignExpr(this);
 	}
 };
+class LogicExpr: public Expr{
+public:
+	LogicExpr(Expr* left, Expr* right, Token op): left(left), right(right), op(op) {
+	}
+	Expr* left;
+	Expr* right;
+	Token op;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitLogicExpr(this);
+	}
+};
 class PrintStmt;
 class ExpressionStmt;
 class VarDeclarationStmt;
 class BlockStmt;
+class IfStmt;
 class StmtVisitor {
 public:
 	virtual std::any visitPrintStmt(PrintStmt* expr) = 0;
 	virtual std::any visitExpressionStmt(ExpressionStmt* expr) = 0;
 	virtual std::any visitVarDeclarationStmt(VarDeclarationStmt* expr) = 0;
 	virtual std::any visitBlockStmt(BlockStmt* expr) = 0;
+	virtual std::any visitIfStmt(IfStmt* expr) = 0;
 };
 class Stmt {
 public:
@@ -129,5 +144,16 @@ public:
 	std::vector<Stmt*> statements;
 	std::any accept(StmtVisitor* visitor) override {
 		return visitor->visitBlockStmt(this);
+	}
+};
+class IfStmt: public Stmt{
+public:
+	IfStmt(Expr* condition, Stmt* thenStatement, Stmt* elseStatement): condition(condition), thenStatement(thenStatement), elseStatement(elseStatement) {
+	}
+	Expr* condition;
+	Stmt* thenStatement;
+	Stmt* elseStatement;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitIfStmt(this);
 	}
 };

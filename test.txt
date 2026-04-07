@@ -3,25 +3,11 @@
 a big comment
 block!
 */
-var a = "global a";
-var b = "global b";
-var c = "global c";
-{
-  var a = "outer a";
-  var b = "outer b";
-  {
-    var a = "inner a";
-    print a;
-    print b;
-    print c;
-  }
-  print a;
-  print b;
-  print c;
+if (false) {
+  print "hello";
+  print "world";
+} else if (false) {
+  print "bye";
 }
-print a;
-print b;
-print c;
-
-print d;
-var d = "too late!";
+print "hi" or 2; // "hi"
+print (nil or "world")+"hello"; // "worldhello"
