@@ -118,6 +118,7 @@ struct Scanner {
             case ('!'): {
                 if (match('=')) {
                     addToken(BANG_EQUAL);
+                    break;
                 }
                 addToken(BANG);
                 break;
@@ -125,6 +126,7 @@ struct Scanner {
             case ('='): {
                 if (match('=')) {
                     addToken(EQUAL_EQUAL);
+                    break;
                 }
                 addToken(EQUAL);
                 break;
@@ -132,6 +134,7 @@ struct Scanner {
             case ('<'): {
                 if (match('=')) {
                     addToken(LESS_EQUAL);
+                    break;
                 }
                 addToken(LESS);
                 break;
@@ -139,6 +142,7 @@ struct Scanner {
             case ('>'): {
                 if (match('=')) {
                     addToken(GREATER_EQUAL);
+                    break;
                 }
                 addToken(GREATER);
                 break;

@@ -95,6 +95,7 @@ public:
 class PrintStmt;
 class ExpressionStmt;
 class VarDeclarationStmt;
+class WhileStmt;
 class BlockStmt;
 class IfStmt;
 class StmtVisitor {
@@ -102,6 +103,7 @@ public:
 	virtual std::any visitPrintStmt(PrintStmt* expr) = 0;
 	virtual std::any visitExpressionStmt(ExpressionStmt* expr) = 0;
 	virtual std::any visitVarDeclarationStmt(VarDeclarationStmt* expr) = 0;
+	virtual std::any visitWhileStmt(WhileStmt* expr) = 0;
 	virtual std::any visitBlockStmt(BlockStmt* expr) = 0;
 	virtual std::any visitIfStmt(IfStmt* expr) = 0;
 };
@@ -135,6 +137,16 @@ public:
 	Expr* initializer;
 	std::any accept(StmtVisitor* visitor) override {
 		return visitor->visitVarDeclarationStmt(this);
+	}
+};
+class WhileStmt: public Stmt{
+public:
+	WhileStmt(Expr* condition, Stmt* body): condition(condition), body(body) {
+	}
+	Expr* condition;
+	Stmt* body;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitWhileStmt(this);
 	}
 };
 class BlockStmt: public Stmt{

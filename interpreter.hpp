@@ -178,6 +178,12 @@ public:
         }
         return std::any{};
     }
+    std::any visitWhileStmt(WhileStmt* stmt) override {
+        while (isTruthy(evaluate(stmt->condition))) {
+            execute(stmt->body);
+        }
+        return std::any{};
+    }
     std::any visitLogicExpr(LogicExpr* expr) override {
         std::any left = evaluate(expr->left);
         // short-circuit evaluation
@@ -213,6 +219,7 @@ public:
             }
         } catch(const RuntimeError& e) {
             // should we synchronize here?
+            std::cerr<<e.what()<<'\n';
         }
         this->env = previous;
     }

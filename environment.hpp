@@ -37,8 +37,9 @@ struct Environment {
         }
         if (enclosing) {
             enclosing->assign(token, value);
+            return;
         }
-        // not allowed to define a variable
+        // assign operator is not allowed to define a variable
         throw RuntimeError(token.line, "Undefined variable: " + token.lexeme);
     }
 };

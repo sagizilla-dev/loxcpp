@@ -48,7 +48,61 @@ struct Parser {
         if (match({IF})) {
             return ifStatement();
         }
+        if (match({WHILE})) {
+            return whileStatement();
+        }
+        if (match({FOR})) {
+            return forStatement();
+        }
         return expressionStatement();
+    }
+    Stmt* forStatement() {
+        consume(LEFT_PAREN, "Expected ( after 'for'");
+        Stmt* initializer = nullptr;
+        // check if the initializer is provided
+        if (match({SEMICOLON})) {
+            initializer = nullptr;
+        } else if (match({VAR})) {
+            initializer = varDeclaration();
+        } else {
+            initializer = expressionStatement();
+        }
+        // check if the condition is provided (infinite loop if not provided)
+        Expr* condition = nullptr;
+        if (!checkTokenType(SEMICOLON)) {
+            condition = expression();
+        }
+        consume(SEMICOLON, "Expected ; after loop condition");
+        // check if the final expression is provided (usually an increment)
+        Expr* increment = nullptr;
+        if (!checkTokenType(RIGHT_PAREN)) {
+            increment = expression();
+        }
+        consume(RIGHT_PAREN, "Expected ) after for statement");
+
+        Stmt* body = statement();
+
+        // start desugaring -> convert for loop into a while loop
+        if (increment) {
+            body = new BlockStmt({body, new ExpressionStmt(increment)});
+        }
+        if (condition) {
+            body = new WhileStmt(condition, body);
+        } else {
+            body = new WhileStmt(new LiteralExpr(true), body);
+        }
+        if (initializer) {
+            body = new BlockStmt({initializer, body});
+        }
+
+        return body;
+    }
+    Stmt* whileStatement() {
+        consume(LEFT_PAREN, "Expected ( after 'while'");
+        Expr* condition = expression();
+        consume(RIGHT_PAREN, "Expected ) after while condition");
+        Stmt* body = statement();
+        return new WhileStmt(condition, body);
     }
     Stmt* ifStatement() {
         // this is needed to create separation between condition and actual thenStatement
@@ -124,7 +178,7 @@ struct Parser {
         if (match({AND})) {
             Token op = previous();
             Expr* right = equality();
-            right = new LogicExpr(left, right, op);
+            left = new LogicExpr(left, right, op);
         }
         return left;
     }

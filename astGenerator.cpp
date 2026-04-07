@@ -17,7 +17,9 @@
     program         -> declaration* END;
     declaration     -> varDeclaration | statement;
     varDeclaration  -> "var" IDENTIFIER ( "=" expr )? ";";
-    statement       -> exprStatement | printStatement | blockStatement | ifStatement;
+    statement       -> exprStatement | printStatement | blockStatement | ifStatement | whileStmt | forStmt;
+    forStmt         -> "for" "(" ( varDeclaration | exprStatement | ";" ) expr? ";" expr? ")" statement;
+    whileStmt       -> "while" "(" expr ")" statement;
     ifStatement     -> "if" "(" expr ")" statement ( "else" statement )?;
     exprStatement   -> expr ";";
     printStatement  -> "print" expr ";";
@@ -105,6 +107,7 @@ int main() {
         {"Print", {{"Expr*", "expr"}}},
         {"Expression", {{"Expr*", "expr"}}},
         {"VarDeclaration", {{"Token", "name"}, {"Expr*", "initializer"}}},
+        {"While", {{"Expr*", "condition"}, {"Stmt*", "body"}}},
         {"Block", {{"std::vector<Stmt*>", "statements"}}},
         {"If", {{"Expr*", "condition"}, {"Stmt*", "thenStatement"}, {"Stmt*", "elseStatement"}}}
     });
