@@ -82,7 +82,7 @@ struct Parser {
 
         Stmt* body = statement();
 
-        // start desugaring -> convert for loop into a while loop
+        // start desugaring, i.e. convert "for" loop into a "while" loop
         if (increment) {
             body = new BlockStmt({body, new ExpressionStmt(increment)});
         }
@@ -107,7 +107,7 @@ struct Parser {
     Stmt* ifStatement() {
         // this is needed to create separation between condition and actual thenStatement
         // i.e if x*x*b=nullptr; is ambiguous since it can be parsed as
-        // if (x*x) *b=nullptr; 
+        // if (x*x) *b=nullptr; or
         // if (x) *x*b=nullptr;
         consume(LEFT_PAREN, "Expected ( after 'if'");
         Expr* condition = expression();
@@ -146,8 +146,11 @@ struct Parser {
         // assignment expression is tricky since the left-hand side might be any expression, and we don't
         // know we are parsing an assignment expression until we stubmle upon =, which may occur however many tokens ahead
         // i.e node.next.prev.prev.prev.value = 2;
-        // this is important since we cannot accept a program that does "a+b=2;"
-        // we must verify the left-hand side is an expression that is an l-value, not r-value
+        // this is important since we cannot accept a program that does "a+b=2;" and must catch the error as early as possible
+        // we must verify the left-hand side is an expression that is an l-value, not r-value.
+        
+        // we also store the assignment target as a Token, not Expr*, so that the interpreter doesn't
+        // evaluate it
         Expr* expr = orExpr();
 
         if (match({EQUAL})) {
@@ -273,9 +276,9 @@ struct Parser {
     }
     void synchronize() {
         advance();
-        // keep going through tokens until we get to a statement boundary
-        // thus we report the original error, get rid of possibly useless cascaded errors
-        // and now back to parsing
+        // keep going through tokens until we get to a statement boundary.
+        // thus we can report the original error, get rid of possibly useless cascaded errors
+        // and get back to parsing
         while (!isAtEnd()) {
             if (previous().type==SEMICOLON) {
                 return;

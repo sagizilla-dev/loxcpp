@@ -52,7 +52,6 @@ void defineVisitor(std::ofstream& file, std::string baseName, std::vector<astTyp
     file<<"};\n";
 }
 void defineAST(std::ofstream& file, std::string baseName, std::vector<astTypes> types) {
-    // define visitor first due to forward declaration
     defineVisitor(file, baseName, types);
 
     file<<"class "<<baseName<<" {\n";
@@ -70,6 +69,7 @@ void defineAST(std::ofstream& file, std::string baseName, std::vector<astTypes> 
                 file<<", ";
             }
         }
+        // initializer list
         file<<"): ";
         for (int i=0; i<type.second.size(); i++) {
             file<<type.second[i].second<<"("<<type.second[i].second<<")";

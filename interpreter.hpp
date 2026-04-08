@@ -26,6 +26,8 @@ public:
         }
         if (value.type()==typeid(double)) {
             std::string str = std::to_string(std::any_cast<double>(value));
+            // since all numbers are doubles including ints, we just trim off all zeroes
+            // after the decimal
             if (std::floor(std::any_cast<double>(value))==std::any_cast<double>(value)) {
                 str = std::to_string((long long)std::floor(std::any_cast<double>(value)));
             }
@@ -96,6 +98,7 @@ public:
         return std::any{}; // unreachable
     }
     bool isEqual(std::any left, std::any right) {
+        // two nils are equal
         if (!left.has_value() && !right.has_value()) {
             return true;
         }
@@ -218,8 +221,7 @@ public:
                 execute(stmt);
             }
         } catch(const RuntimeError& e) {
-            // should we synchronize here?
-            std::cerr<<e.what()<<'\n';
+            throw e;
         }
         this->env = previous;
     }

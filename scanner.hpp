@@ -163,7 +163,6 @@ struct Scanner {
                 errorMessage+=code.substr(start, current-start);
                 throw ScannerError(line, errorMessage);
             }
-               
         }
     }
     void createIdentifier() {
@@ -182,7 +181,7 @@ struct Scanner {
         }
         if (peek()=='.' && isdigit(peekNext())) {
             advance(); // consume the .
-            while (isdigit(peek())) {
+            while (!isAtEnd() && isdigit(peek())) {
                 advance();
             }
         }

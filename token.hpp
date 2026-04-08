@@ -21,7 +21,7 @@ enum TOKEN_TYPE {
 struct Token {
     TOKEN_TYPE type;
     std::string lexeme;
-    std::any literal; // value is defined for boolean, strings and numbers
+    std::any literal; // value is defined for boolean, strings and numbers, and not defined for nil expression
     int line;
     Token(TOKEN_TYPE type, std::string lexeme, std::any literal, int line):
     type(type), lexeme(lexeme), literal(literal), line(line) {
