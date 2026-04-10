@@ -55,3 +55,36 @@ public:
     }
 };
 bool RuntimeError::errorFound = false;
+
+// this return class is only needed to get out of a function
+// no matter how deep we are
+// stack unwinding lets us get back and "catch" the return right where the function is called
+class Return: public std::exception {
+public:
+    std::any value;
+    Return(std::any value):value(value) {
+        
+    }
+};
+inline std::string stringify(std::any value) {
+    if (!value.has_value()) {
+        return "nil";
+    }
+    if (value.type()==typeid(double)) {
+        std::string str = std::to_string(std::any_cast<double>(value));
+        // since all numbers are doubles including ints, we just trim off all zeroes
+        // after the decimal
+        if (std::floor(std::any_cast<double>(value))==std::any_cast<double>(value)) {
+            str = std::to_string((long long)std::floor(std::any_cast<double>(value)));
+        }
+        return str;
+    }
+    if (value.type()==typeid(bool)) {
+        std::string str = std::to_string(std::any_cast<bool>(value));
+        return str;
+    }
+    if (value.type()==typeid(std::string)) {
+        return std::any_cast<std::string>(value);
+    }
+    return ""; // unreachable
+}
