@@ -21,6 +21,11 @@ struct Parser {
             if (match({VAR})) {
                 return varDeclaration();
             }
+            if (match({FUN})) {
+                // we need to provide the type of function declaration
+                // since methods and functions are declared slightly differently
+                return funDeclaration("function");
+            }
             return statement();
         } catch (const SyntaxError& e) {
             std::cerr<<e.what()<<'\n';
@@ -28,6 +33,26 @@ struct Parser {
             synchronize();
             return nullptr;
         }
+    }
+    Stmt* funDeclaration(std::string kind) {
+        Token name = consume(IDENTIFIER, "Expected " + kind + " name");
+        consume(LEFT_PAREN, "Expected ( after " + kind + " name");
+        std::vector<Token> parameters;
+        if (!checkTokenType(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    std::cerr<<SyntaxError(peek().line, "Can't have more than 255 parameters").what()<<'\n';
+                }
+                parameters.push_back({consume(IDENTIFIER, "Expected parameter name")});
+            } while (match({COMMA}));
+        }
+        consume(RIGHT_PAREN, "Expected ) after parameters");
+        consume(LEFT_BRACE, "Expected { after before " + kind + " body");
+        // we are not treating the body as a single blockStmt since the call
+        // to execute a blockStmt (visitBlockStmt) will create a new environment (scope), so
+        // the body will live in the innermost environment, while parameters live in the enclosing environment
+        std::vector<Stmt*> body = blockStatement();
+        return new FunDeclarationStmt(name, parameters, body);
     }
     Stmt* varDeclaration() {
         Token name = consume(IDENTIFIER, "Expected variable name");
@@ -39,8 +64,8 @@ struct Parser {
         return new VarDeclarationStmt(name, initializer);
     }
     Stmt* statement() {
-        if (match({PRINT})) {
-            return printStatement();
+        if (match({RETURN})) {
+            return returnStatement();
         }
         if (match({LEFT_BRACE})) {
             return new BlockStmt(blockStatement());
@@ -55,6 +80,15 @@ struct Parser {
             return forStatement();
         }
         return expressionStatement();
+    }
+    Stmt* returnStatement() {
+        Token keyword = previous();
+        Expr* expr = nullptr;
+        if (!checkTokenType(SEMICOLON)) {
+            expr = expression();
+        }
+        consume(SEMICOLON, "Expected ; after return value");
+        return new ReturnStmt(keyword, expr);
     }
     Stmt* forStatement() {
         consume(LEFT_PAREN, "Expected ( after 'for'");
@@ -237,7 +271,34 @@ struct Parser {
             return new UnaryExpr(right, op);
         }
 
-        return primary();
+        return call();
+    }
+    Expr* call() {
+        Expr* expr = primary(); // must be a variable's name
+        // this is done to parse things like "getCallee()()();"
+        while (true) {
+            if (match({LEFT_PAREN})) {
+                expr = finishCallExpr(expr);
+            } else {
+                break;
+            }
+        }
+        return expr;
+    }
+    Expr* finishCallExpr(Expr* callee) {
+        std::vector<Expr*> arguments;
+        if (!checkTokenType(RIGHT_PAREN)) {
+            do {
+                if (arguments.size()>=255) {
+                    // technically speaking we don't need to synchronize here since the parser
+                    // is not in a panic mode
+                    std::cerr<<SyntaxError(peek().line, "Can't have more than 255 arguments").what()<<'\n';
+                }
+                arguments.push_back(expression());
+            } while (match({COMMA}));
+        }
+        Token paren = consume(RIGHT_PAREN, "Expected ) after arguments");
+        return new CallExpr(callee, paren, arguments);
     }
     Expr* primary() {
         if (match({FALSE})) {
@@ -290,7 +351,6 @@ struct Parser {
                 case FOR:
                 case IF:
                 case WHILE:
-                case PRINT:
                 case RETURN:
                     return;
             }

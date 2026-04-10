@@ -4,7 +4,7 @@
 #include "token.hpp"
 
 struct Environment {
-    Environment* enclosing; // outer environment
+    Environment* enclosing; // outer environment, thus forming parent-pointer tree
     std::unordered_map<std::string, std::any> values;
     Environment() {
         enclosing = nullptr;
@@ -23,15 +23,13 @@ struct Environment {
             // this allows us to check outter scopes until we either find the variable or throw an error
             return enclosing->get(token);
         }
-        // so referring to a non-declared variable should be a syntax error, but in this case it is
+        // so using a non-declared variable should be a syntax error, but in this case it is
         // a runtime error since, if we define it to be a static error,
         // it becomes a lot harder to define recursive functions.
         // note that using a variable is not the same as referring to it, i.e
-        // referring to a variable inside a function should be allowed.
-        // single-function recursion should be allowed, and even functions that call each other are
-        // allowed.
-        // so now it is allowed to refer to an undefined variable as long as it is not evaluated,
-        // but in such a case we will throw a runtime error
+        // a recursive function should be allowed, and functions that call each other should be allowed too
+        // so now it is allowed to refer to an undefined variable as long as it is not evaluated.
+        // if it is evaluated, we throw a runtime error
         throw RuntimeError(token.line, "Undefined variable: " + token.lexeme);
     }
     void assign(Token token, std::any value) {
@@ -43,7 +41,7 @@ struct Environment {
             enclosing->assign(token, value);
             return;
         }
-        // assign operator is not allowed to define a variable!
+        // assign operator is not allowed to define a variable
         throw RuntimeError(token.line, "Undefined variable: " + token.lexeme);
     }
 };

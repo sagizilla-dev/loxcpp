@@ -9,6 +9,7 @@ class LiteralExpr;
 class VariableExpr;
 class AssignExpr;
 class LogicExpr;
+class CallExpr;
 class ExprVisitor {
 public:
 	virtual std::any visitBinaryExpr(BinaryExpr* expr) = 0;
@@ -18,6 +19,7 @@ public:
 	virtual std::any visitVariableExpr(VariableExpr* expr) = 0;
 	virtual std::any visitAssignExpr(AssignExpr* expr) = 0;
 	virtual std::any visitLogicExpr(LogicExpr* expr) = 0;
+	virtual std::any visitCallExpr(CallExpr* expr) = 0;
 };
 class Expr {
 public:
@@ -92,20 +94,35 @@ public:
 		return visitor->visitLogicExpr(this);
 	}
 };
+class CallExpr: public Expr{
+public:
+	CallExpr(Expr* callee, Token paren, std::vector<Expr*> arguments): callee(callee), paren(paren), arguments(arguments) {
+	}
+	Expr* callee;
+	Token paren;
+	std::vector<Expr*> arguments;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitCallExpr(this);
+	}
+};
 class PrintStmt;
 class ExpressionStmt;
 class VarDeclarationStmt;
+class FunDeclarationStmt;
 class WhileStmt;
 class BlockStmt;
 class IfStmt;
+class ReturnStmt;
 class StmtVisitor {
 public:
 	virtual std::any visitPrintStmt(PrintStmt* expr) = 0;
 	virtual std::any visitExpressionStmt(ExpressionStmt* expr) = 0;
 	virtual std::any visitVarDeclarationStmt(VarDeclarationStmt* expr) = 0;
+	virtual std::any visitFunDeclarationStmt(FunDeclarationStmt* expr) = 0;
 	virtual std::any visitWhileStmt(WhileStmt* expr) = 0;
 	virtual std::any visitBlockStmt(BlockStmt* expr) = 0;
 	virtual std::any visitIfStmt(IfStmt* expr) = 0;
+	virtual std::any visitReturnStmt(ReturnStmt* expr) = 0;
 };
 class Stmt {
 public:
@@ -139,6 +156,17 @@ public:
 		return visitor->visitVarDeclarationStmt(this);
 	}
 };
+class FunDeclarationStmt: public Stmt{
+public:
+	FunDeclarationStmt(Token name, std::vector<Token> parameters, std::vector<Stmt*> body): name(name), parameters(parameters), body(body) {
+	}
+	Token name;
+	std::vector<Token> parameters;
+	std::vector<Stmt*> body;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitFunDeclarationStmt(this);
+	}
+};
 class WhileStmt: public Stmt{
 public:
 	WhileStmt(Expr* condition, Stmt* body): condition(condition), body(body) {
@@ -167,5 +195,15 @@ public:
 	Stmt* elseStatement;
 	std::any accept(StmtVisitor* visitor) override {
 		return visitor->visitIfStmt(this);
+	}
+};
+class ReturnStmt: public Stmt{
+public:
+	ReturnStmt(Token keyword, Expr* value): keyword(keyword), value(value) {
+	}
+	Token keyword;
+	Expr* value;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitReturnStmt(this);
 	}
 };

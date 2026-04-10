@@ -5,24 +5,18 @@
 /*
     BNF to define metasyntax for our grammar:
 
-    expr     -> binary | literal | grouping | unary;
-    binary   -> expr operator expr;
-    literal  -> IDENTIFIER | STRING | NUMBER | "true" | "false" | nil;
-    grouping -> "(" expr ")";
-    unary    -> ("!" | "-") expr;
-    operator -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
-
-    To avoid ambiguity during parsing and introduce operators precedence we redefine it:
-
     program         -> declaration* END;
-    declaration     -> varDeclaration | statement;
+    declaration     -> varDeclaration | funDeclaration | statement;
+    funDeclaration  -> "fun" function;
+    function        -> IDENTIFIER "(" parameters? ")" blockStatement;
+    parameters      -> IDENTIFIER ("," IDENTIFIER )*;
     varDeclaration  -> "var" IDENTIFIER ( "=" expr )? ";";
-    statement       -> exprStatement | printStatement | blockStatement | ifStatement | whileStmt | forStmt;
+    statement       -> exprStatement | blockStatement | ifStatement | whileStmt | forStmt | returnStmt;
+    returnStmt      -> "return" expression? ";";
     forStmt         -> "for" "(" ( varDeclaration | exprStatement | ";" ) expr? ";" expr? ")" statement;
     whileStmt       -> "while" "(" expr ")" statement;
     ifStatement     -> "if" "(" expr ")" statement ( "else" statement )?;
     exprStatement   -> expr ";";
-    printStatement  -> "print" expr ";";
     blockStatement  -> "{" declaration* "}";
     expr            -> assignment;
     assignment      -> ( IDENTIFIER "=" assignment ) | equality | logicOR;
@@ -32,7 +26,9 @@
     comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
     term            -> factor ( ( "+" | "-" ) factor )*;
     factor          -> unary ( ( "/" | "*" ) unary )*;
-    unary           -> ( ("!" | "-") unary ) | primary;
+    unary           -> ( ("!" | "-") unary ) | call;
+    call            -> primary ( "(" argumentes? ")" )*;
+    arguments       -> expr ( "," arguments )*;
     primary         -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" ) | IDENTIFIER;
 */
 
@@ -102,13 +98,17 @@ int main() {
         {"Variable", {{"Token", "name"}}},
         {"Assign", {{"Token", "name"}, {"Expr*", "value"}}},
         {"Logic", {{"Expr*", "left"}, {"Expr*", "right"}, {"Token", "op"}}},
+        // right parenthesis is only used to report an error
+        {"Call", {{"Expr*", "callee"}, {"Token", "paren"}, {"std::vector<Expr*>", "arguments"}}}
     });
     defineAST(file, "Stmt", {
         {"Print", {{"Expr*", "expr"}}},
         {"Expression", {{"Expr*", "expr"}}},
         {"VarDeclaration", {{"Token", "name"}, {"Expr*", "initializer"}}},
+        {"FunDeclaration", {{"Token", "name"}, {"std::vector<Token>", "parameters"}, {"std::vector<Stmt*>", "body"}}},
         {"While", {{"Expr*", "condition"}, {"Stmt*", "body"}}},
         {"Block", {{"std::vector<Stmt*>", "statements"}}},
-        {"If", {{"Expr*", "condition"}, {"Stmt*", "thenStatement"}, {"Stmt*", "elseStatement"}}}
+        {"If", {{"Expr*", "condition"}, {"Stmt*", "thenStatement"}, {"Stmt*", "elseStatement"}}},
+        {"Return", {{"Token", "keyword"}, {"Expr*", "value"}}}
     });
 }
