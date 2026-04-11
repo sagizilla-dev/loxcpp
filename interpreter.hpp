@@ -29,6 +29,10 @@ class Interpreter: public ExprVisitor, public StmtVisitor {
 public:
     Environment* global; // global scope is needed to define native functions
     Environment* env; // current environment, starts off as global
+    // this stores variable resolutions, i.e. how many environment jumps we need to do from
+    // the current environment to arrive at the correct variable declaration
+    // this gets populated with unique expressions even if two expressions map to the same variable
+    std::unordered_map<Expr*, int> locals;
     Interpreter() {
         global = new Environment;
         env = global;
@@ -174,7 +178,12 @@ public:
         return nullptr;
     }
     std::any visitVariableExpr(VariableExpr* expr) override {
-        return env->get(expr->name);
+        if (locals.count(expr)) {
+            int depth = locals[expr];
+            return env->getAt(depth, expr->name.lexeme);
+        } else {
+            return global->get(expr->name);
+        }
     }
     std::any visitIfStmt(IfStmt* stmt) override {
         if (isTruthy(evaluate(stmt->condition))) {
@@ -206,9 +215,17 @@ public:
         }
         return evaluate(expr->right);
     }
+    void resolve(Expr* expr, int depth) {
+        locals[expr]=depth;
+    }
     std::any visitAssignExpr(AssignExpr* expr) override {
         std::any value = evaluate(expr->value);
-        env->assign(expr->name, value);
+        if (locals.count(expr)) {
+            int depth = locals[expr];
+            env->assignAt(depth, expr->name, value);
+        } else {
+            global->assign(expr->name, value);
+        }
         return value;
     }
     std::any visitBlockStmt(BlockStmt* stmt) override {

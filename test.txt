@@ -1,18 +1,123 @@
-/* this is
-a big comment
-block!
-*/
-var start = clock();
-fun fib(n) {
-  if (n <= 1) return n;
-  return fib(n - 1) + fib(n - 2);
+// --- higher order functions ---
+fun makeCounter(start) {
+    var count = start;
+    fun increment() {
+      count = count + 1;
+      return count;
+    }
+    return increment;
 }
 
-for (var i = 0; i < 20; i = i + 1) {
-  fib(i);
+var counter1 = makeCounter(0);
+var counter2 = makeCounter(10);
+
+print(counter1()); // 1
+print(counter1()); // 2
+print(counter2()); // 11
+print(counter1()); // 3  (counter2 doesn't affect counter1)
+
+// --- closure captures the right variable ---
+fun makeAdder(x) {
+    fun adder(y) {
+        return x + y;
+    }
+    return adder;
 }
-var end = clock();
-var timeTaken = end-start;
-print("Took ");
-print(timeTaken);
-print("ms");
+
+var add5 = makeAdder(5);
+var add10 = makeAdder(10);
+print(add5(3));   // 8
+print(add10(3));  // 13
+print(add5(add10(1))); // 16
+
+// --- fibonacci iteratively ---
+fun fibIter(n) {
+    if (n <= 1) return n;
+    var a = 0;
+    var b = 1;
+    var i = 2;
+    while (i <= n) {
+        var tmp = a + b;
+        a = b;
+        b = tmp;
+        i = i + 1;
+    }
+    return b;
+}
+
+// --- fibonacci recursively ---
+fun fibRec(n) {
+    if (n <= 1) return n;
+    return fibRec(n - 1) + fibRec(n - 2);
+}
+
+// both should produce same results
+var i = 0;
+for (var i = 0; i <= 7; i = i + 1) {
+    print(fibIter(i));
+    print(fibRec(i));
+}
+
+// --- mutual recursion (tests resolver) ---
+fun isEven(n) {
+    if (n == 0) return true;
+    return isOdd(n - 1);
+}
+
+fun isOdd(n) {
+    if (n == 0) return false;
+    return isEven(n - 1);
+}
+
+print(isEven(4)); // true
+print(isOdd(7));  // true
+print(isEven(3)); // false
+
+// --- closures in loops (classic gotcha) ---
+fun makeList() {
+    var i = 0;
+    fun next() {
+        i = i + 1;
+        return i;
+    }
+    return next;
+}
+
+var next = makeList();
+print(next()); // 1
+print(next()); // 2
+print(next()); // 3
+
+// --- deep recursion with accumulator ---
+fun sumTo(n) {
+    if (n <= 0) return 0;
+    return n + sumTo(n - 1);
+}
+print(sumTo(100)); // 5050
+
+// --- shadowing test (tests resolver scopes) ---
+var x = "global";
+{
+    var x = "outer";
+    {
+        var x = "inner";
+        print(x); // inner
+    }
+    print(x); // outer
+}
+print(x); // global
+
+// --- function returning function returning function ---
+fun makeMultiplier(x) {
+    fun multiply(y) {
+        fun doIt() {
+            return x * y;
+        }
+        return doIt;
+    }
+    return multiply;
+}
+
+var triple = makeMultiplier(3);
+var tripleOf4 = triple(4);
+print(tripleOf4()); // 12

@@ -4,6 +4,7 @@
 // #include "astPrinter.hpp"
 #include "parser.hpp"
 #include "interpreter.hpp"
+#include "resolver.hpp"
 
 int main(int argc, char** argv) {
     Scanner scanner(readFile("../test.txt"));
@@ -19,6 +20,8 @@ int main(int argc, char** argv) {
     // ASTPrinter astPrinter;
     // astPrinter.print(expr);
     Interpreter interpreter;
+    Resolver resolver(&interpreter);
+    resolver.resolve(statements);
     interpreter.interpret(statements);
     if (RuntimeError::errorFound) {
         exit(1);

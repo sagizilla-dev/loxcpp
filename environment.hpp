@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "common.hpp"
 #include "token.hpp"
+#include "ast.hpp"
 
 struct Environment {
     Environment* enclosing; // outer environment, thus forming parent-pointer tree
@@ -43,5 +44,20 @@ struct Environment {
         }
         // assign operator is not allowed to define a variable
         throw RuntimeError(token.line, "Undefined variable: " + token.lexeme);
+    }
+    void assignAt(int depth, Token token, std::any value) {
+        ancestor(depth)->assign(token, value);
+    }
+    std::any getAt(int depth, std::string name) {
+        // it is assumed if the depth was provided then the variable has
+        // been declared for sure
+        return ancestor(depth)->values[name];
+    }
+    Environment* ancestor(int depth) {
+        Environment* env = this;
+        for (int i=0; i<depth; i++) {
+            env = env->enclosing;
+        }
+        return env;
     }
 };

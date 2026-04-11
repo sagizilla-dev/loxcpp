@@ -40,6 +40,22 @@ public:
 };
 bool SyntaxError::errorFound = false;
 
+class ResolverError: public std::exception {
+public:
+    int line;
+    std::string message;
+    std::string errorMessage;
+    static bool errorFound;
+    ResolverError(int line, std::string errorMessage): line(line), errorMessage(errorMessage) {
+        errorFound = true;
+        message = "ResolverError error[" + std::to_string(line)+"] -> " + errorMessage;
+    }
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+bool ResolverError::errorFound = false;
+
 class RuntimeError: public std::exception {
 public:
     int line;

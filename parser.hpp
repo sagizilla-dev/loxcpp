@@ -163,11 +163,6 @@ struct Parser {
         consume(RIGHT_BRACE, "Expected } after block");
         return statements;
     }
-    Stmt* printStatement() {
-        Expr* value = expression();
-        consume(SEMICOLON, "Expected ; after statement");
-        return new PrintStmt(value);
-    }
     Stmt* expressionStatement() {
         Expr* value = expression();
         consume(SEMICOLON, "Expected ; after statement");
