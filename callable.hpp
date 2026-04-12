@@ -16,7 +16,9 @@ class Function: public Callable {
 public:
     Environment* closure; // this is the environment where the function was DECLARED
     FunDeclarationStmt* declaration;
-    Function(FunDeclarationStmt* stmt, Environment* closure): declaration(stmt), closure(closure) {
+    bool isInitializer;
+    Function(FunDeclarationStmt* stmt, Environment* closure, bool isInitializer=false): 
+    declaration(stmt), closure(closure), isInitializer(isInitializer) {
 
     }
     std::any call(Interpreter* interpreter, std::vector<std::any> arguments) override;
@@ -31,7 +33,7 @@ public:
         // and then make that new environment the closure for this method
         Environment* env = new Environment(closure);
         env->define("this", instance);
-        return new Function(declaration, env);
+        return new Function(declaration, env, isInitializer);
     }
 };
 

@@ -16,6 +16,10 @@ public:
     }
     std::any call(Interpreter* interpreter, std::vector<std::any> arguments);
     int arity() {
+        Function* initializer = findMethod("init");
+        if (initializer) {
+            return initializer->arity();
+        }
         return 0;
     }
     Function* findMethod(std::string name) {
@@ -53,5 +57,13 @@ public:
 };
 std::any Class::call(Interpreter* interpreter, std::vector<std::any> arguments) {
     ClassInstance* instance = new ClassInstance(this);
+    Function* initializer = findMethod("init");
+    if (initializer) {
+        // from the very beginning we bind the initializer to class instance
+        // and then call the initializer itself
+        // since "this" points to the instance, initializer is free
+        // to change it however it needs
+        (initializer->bind(instance))->call(interpreter, arguments);
+    }
     return instance;
 }

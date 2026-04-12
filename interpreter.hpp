@@ -163,7 +163,7 @@ public:
         env->define(stmt->name.lexeme, std::any{});
         std::unordered_map<std::string, Function*> methods;
         for (auto method: stmt->methods) {
-            methods[method->name.lexeme]=(new Function(method, env));
+            methods[method->name.lexeme]=(new Function(method, env, method->name.lexeme=="init"));
         }
         Callable* klass = new Class(stmt->name.lexeme, methods);
         // two-stage variable binding allows class' methods to refer to the class itself
@@ -324,8 +324,14 @@ std::any Function::call(Interpreter* interpreter, std::vector<std::any> argument
         // execute the statements, but note that the body is not BlockStmt
         interpreter->executeBlock(declaration->body, env);
     } catch (const Return& r) {
+        if (isInitializer) {
+            return closure->getAt(0, "this");
+        }
         return r.value;
     }
     // function with no return value or return statement returns nil
+    if (isInitializer) {
+        return closure->getAt(0, "this");
+    }
     return std::any{};
 }

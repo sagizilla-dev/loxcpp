@@ -9,7 +9,10 @@
 
 // this is to check if we are inside a function or not
 enum FUNCTION_TYPE {
-    NONE, FUNCTION, METHOD
+    NONE, FUNCTION, METHOD, INITIALIZER
+};
+enum CLASS_TYPE {
+    NONE_CLASS_TYPE, CLASS_CLASS_TYPE
 };
 class Resolver: public ExprVisitor, public StmtVisitor {
 public:
@@ -20,7 +23,8 @@ public:
     // key is the variable's name, value is its status, i.e if it has been resolved or not
     std::vector<std::unordered_map<std::string, bool>> scopes;
     FUNCTION_TYPE currentFunction;
-    Resolver(Interpreter* interpreter): interpreter(interpreter), currentFunction(NONE) {
+    CLASS_TYPE currentClass;
+    Resolver(Interpreter* interpreter): interpreter(interpreter), currentFunction(NONE), currentClass(NONE_CLASS_TYPE) {
 
     }
     std::any visitBlockStmt(BlockStmt* stmt) override {
@@ -54,17 +58,23 @@ public:
         return std::any{};
     }
     std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
+        CLASS_TYPE enclosing = currentClass;
+        currentClass = CLASS_CLASS_TYPE;
         declare(stmt->name);
         define(stmt->name);
         beginScope();
         scopes.back()["this"]=true;
         for (auto method: stmt->methods) {
-            resolveFunction(method, METHOD);
+            resolveFunction(method, method->name.lexeme=="init" ? INITIALIZER : METHOD);
         }
         endScope();
+        currentClass = enclosing;
         return std::any{};
     }
     std::any visitThisExpr(ThisExpr* expr) override {
+        if (currentClass!=CLASS_CLASS_TYPE) {
+            std::cerr<<ResolverError(expr->keyword.line, "Cannot use this outside of a class").what()<<'\n';
+        }
         resolveLocal(expr, expr->keyword);
         return std::any{};
     }
@@ -99,10 +109,13 @@ public:
         return std::any{};
     }
     std::any visitReturnStmt(ReturnStmt* stmt) override {
-        if (currentFunction!=FUNCTION) {
+        if (currentFunction==NONE) {
             std::cerr<<ResolverError(stmt->keyword.line, "Cannot return from top-level code").what()<<'\n';
         }
         if (stmt->value) {
+            if (currentFunction==INITIALIZER) {
+                std::cerr<<ResolverError(stmt->keyword.line, "Cannot return from the constructor").what()<<'\n';
+            }
             resolve(stmt->value);
         }
         return std::any{};
