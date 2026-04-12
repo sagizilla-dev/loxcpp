@@ -10,6 +10,8 @@ class VariableExpr;
 class AssignExpr;
 class LogicExpr;
 class CallExpr;
+class GetExpr;
+class SetExpr;
 class ExprVisitor {
 public:
 	virtual std::any visitBinaryExpr(BinaryExpr* expr) = 0;
@@ -20,6 +22,8 @@ public:
 	virtual std::any visitAssignExpr(AssignExpr* expr) = 0;
 	virtual std::any visitLogicExpr(LogicExpr* expr) = 0;
 	virtual std::any visitCallExpr(CallExpr* expr) = 0;
+	virtual std::any visitGetExpr(GetExpr* expr) = 0;
+	virtual std::any visitSetExpr(SetExpr* expr) = 0;
 };
 class Expr {
 public:
@@ -103,6 +107,27 @@ public:
 	std::vector<Expr*> arguments;
 	std::any accept(ExprVisitor* visitor) override {
 		return visitor->visitCallExpr(this);
+	}
+};
+class GetExpr: public Expr{
+public:
+	GetExpr(Expr* object, Token name): object(object), name(name) {
+	}
+	Expr* object;
+	Token name;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitGetExpr(this);
+	}
+};
+class SetExpr: public Expr{
+public:
+	SetExpr(Expr* object, Token name, Expr* value): object(object), name(name), value(value) {
+	}
+	Expr* object;
+	Token name;
+	Expr* value;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitSetExpr(this);
 	}
 };
 class PrintStmt;

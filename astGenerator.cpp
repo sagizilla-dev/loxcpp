@@ -20,7 +20,7 @@
     exprStatement   -> expr ";";
     blockStatement  -> "{" declaration* "}";
     expr            -> assignment;
-    assignment      -> ( IDENTIFIER "=" assignment ) | equality | logicOR;
+    assignment      -> ( call "." )? ( IDENTIFIER "=" assignment ) | logicOR;
     logicOR         -> logicAND ( "or" logicAND )*;
     logicAND        -> equality ( "and" equality )*;
     equality        -> comparison ( ( "==" | "!=" ) comparison )*;
@@ -28,7 +28,7 @@
     term            -> factor ( ( "+" | "-" ) factor )*;
     factor          -> unary ( ( "/" | "*" ) unary )*;
     unary           -> ( ("!" | "-") unary ) | call;
-    call            -> primary ( "(" argumentes? ")" )*;
+    call            -> primary ( ( "(" argumentes? ")" ) | ( "." IDENTIFIER ) )*;
     arguments       -> expr ( "," arguments )*;
     primary         -> NUMBER | STRING | "true" | "false" | nil | ( "(" expr ")" ) | IDENTIFIER;
 */
@@ -100,7 +100,9 @@ int main() {
         {"Assign", {{"Token", "name"}, {"Expr*", "value"}}},
         {"Logic", {{"Expr*", "left"}, {"Expr*", "right"}, {"Token", "op"}}},
         // right parenthesis is only used to report an error
-        {"Call", {{"Expr*", "callee"}, {"Token", "paren"}, {"std::vector<Expr*>", "arguments"}}}
+        {"Call", {{"Expr*", "callee"}, {"Token", "paren"}, {"std::vector<Expr*>", "arguments"}}},
+        {"Get", {{"Expr*", "object"}, {"Token", "name"}}}, // this expression gives us properties/fields
+        {"Set", {{"Expr*", "object"}, {"Token", "name"}, {"Expr*", "value"}}}, // this expression allows us to set properties/fields 
     });
     defineAST(file, "Stmt", {
         {"Print", {{"Expr*", "expr"}}},

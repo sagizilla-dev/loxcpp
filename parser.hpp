@@ -203,6 +203,9 @@ struct Parser {
             if (VariableExpr* var = dynamic_cast<VariableExpr*>(expr)) {
                 Token name = var->name;
                 return new AssignExpr(name, value);
+            } else if (GetExpr* var = dynamic_cast<GetExpr*>(expr)) {
+                // get expression gets transformed into set expression
+                return new SetExpr(var->object, var->name, value);
             }
             throw SyntaxError(equals.line, "Invalid assignment target");
         }
@@ -287,6 +290,9 @@ struct Parser {
         while (true) {
             if (match({LEFT_PAREN})) {
                 expr = finishCallExpr(expr);
+            } else if (match({DOT})) {
+                Token name = consume(IDENTIFIER, "Expected property name after '.'");
+                expr = new GetExpr(expr, name);
             } else {
                 break;
             }

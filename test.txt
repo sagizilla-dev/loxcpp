@@ -1,1 +1,4 @@
 class Bagel {}
+var bagel = Bagel();
+bagel.withBacon = true;
+print(bagel.bacon);

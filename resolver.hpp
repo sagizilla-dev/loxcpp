@@ -9,7 +9,7 @@
 
 // this is to check if we are inside a function or not
 enum FUNCTION_TYPE {
-    NONE, FUNCTION
+    NONE, FUNCTION, METHOD
 };
 class Resolver: public ExprVisitor, public StmtVisitor {
 public:
@@ -114,6 +114,11 @@ public:
         }
         return std::any{};
     }
+    std::any visitSetExpr(SetExpr* expr) override {
+        resolve(expr->value);
+        resolve(expr->object);
+        return std::any{};
+    }
     std::any visitGroupingExpr(GroupingExpr* expr) override {
         resolve(expr->expr);
         return std::any{};
@@ -135,6 +140,12 @@ public:
             std::cout<<ResolverError(expr->name.line, "Cannot read local variable in it's own initializer").what()<<'\n';
         }
         resolveLocal(expr, expr->name);
+        return std::any{};
+    }
+    std::any visitGetExpr(GetExpr* expr) override {
+        // variable resolution only happens on the instance/object
+        // property lookup happens during runtime
+        resolve(expr->object);
         return std::any{};
     }
     void resolveLocal(Expr* expr, Token name) {

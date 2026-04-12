@@ -265,12 +265,30 @@ public:
         }
         return fun->call(this, arguments);
     }
+    std::any visitSetExpr(SetExpr* expr) override {
+        std::any object = evaluate(expr->object);
+        if (object.type()!=typeid(ClassInstance*)) {
+            throw RuntimeError(expr->name.line, "Only instances have fields");
+        }
+        std::any value = evaluate(expr->value);
+        ClassInstance* instance = std::any_cast<ClassInstance*>(object);
+        instance->set(expr->name, value);
+        return value;
+    }
     std::any visitReturnStmt(ReturnStmt* stmt) override {
         std::any value;
         if (stmt->value != nullptr) {
             value = evaluate(stmt->value);
         }
         throw Return(value);
+    }
+    std::any visitGetExpr(GetExpr* expr) override {
+        std::any object = evaluate(expr->object);
+        if (object.type()!=typeid(ClassInstance*)) {
+            throw RuntimeError(expr->name.line, "Only instances have properties");
+        }
+        ClassInstance* instance = std::any_cast<ClassInstance*>(object);
+        return instance->get(expr->name);
     }
     void executeBlock(std::vector<Stmt*> statements, Environment* environment) {
         // save the previous environment to restore it once we exit the block
