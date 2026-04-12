@@ -335,6 +335,9 @@ struct Parser {
         if (match({IDENTIFIER})) {
             return new VariableExpr(previous());
         }
+        if (match({THIS})) {
+            return new ThisExpr(previous());
+        }
         throw SyntaxError(peek().line, "Expected expression");
     }
     Token consume(TOKEN_TYPE tokenType, std::string message) {

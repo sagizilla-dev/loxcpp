@@ -12,6 +12,7 @@ class LogicExpr;
 class CallExpr;
 class GetExpr;
 class SetExpr;
+class ThisExpr;
 class ExprVisitor {
 public:
 	virtual std::any visitBinaryExpr(BinaryExpr* expr) = 0;
@@ -24,6 +25,7 @@ public:
 	virtual std::any visitCallExpr(CallExpr* expr) = 0;
 	virtual std::any visitGetExpr(GetExpr* expr) = 0;
 	virtual std::any visitSetExpr(SetExpr* expr) = 0;
+	virtual std::any visitThisExpr(ThisExpr* expr) = 0;
 };
 class Expr {
 public:
@@ -128,6 +130,15 @@ public:
 	Expr* value;
 	std::any accept(ExprVisitor* visitor) override {
 		return visitor->visitSetExpr(this);
+	}
+};
+class ThisExpr: public Expr{
+public:
+	ThisExpr(Token keyword): keyword(keyword) {
+	}
+	Token keyword;
+	std::any accept(ExprVisitor* visitor) override {
+		return visitor->visitThisExpr(this);
 	}
 };
 class PrintStmt;

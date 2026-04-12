@@ -56,9 +56,16 @@ public:
     std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
         declare(stmt->name);
         define(stmt->name);
+        beginScope();
+        scopes.back()["this"]=true;
         for (auto method: stmt->methods) {
             resolveFunction(method, METHOD);
         }
+        endScope();
+        return std::any{};
+    }
+    std::any visitThisExpr(ThisExpr* expr) override {
+        resolveLocal(expr, expr->keyword);
         return std::any{};
     }
     void resolveFunction(FunDeclarationStmt* stmt, FUNCTION_TYPE type) {

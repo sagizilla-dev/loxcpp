@@ -7,25 +7,6 @@
 #include "callable.hpp"
 #include "class.hpp"
 
-class Interpreter; // forward declaration
-
-// runtime representation of a function (wrapper around AST node FunDeclarationStmt)
-class Function: public Callable {
-public:
-    Environment* closure; // this is the environment where the function was DECLARED
-    FunDeclarationStmt* declaration;
-    Function(FunDeclarationStmt* stmt, Environment* closure): declaration(stmt), closure(closure) {
-
-    }
-    std::any call(Interpreter* interpreter, std::vector<std::any> arguments) override;
-    int arity() override {
-        return declaration->parameters.size();
-    }
-    std::string toString() {
-        return "<fn "+declaration->name.lexeme+">";
-    }
-};
-
 class Interpreter: public ExprVisitor, public StmtVisitor {
 public:
     Environment* global; // global scope is needed to define native functions
@@ -180,7 +161,7 @@ public:
     }
     std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
         env->define(stmt->name.lexeme, std::any{});
-        std::unordered_map<std::string, Callable*> methods;
+        std::unordered_map<std::string, Function*> methods;
         for (auto method: stmt->methods) {
             methods[method->name.lexeme]=(new Function(method, env));
         }
@@ -195,6 +176,14 @@ public:
             return env->getAt(depth, expr->name.lexeme);
         } else {
             return global->get(expr->name);
+        }
+    }
+    std::any visitThisExpr(ThisExpr* expr) override {
+        if (locals.count(expr)) {
+            int depth = locals[expr];
+            return env->getAt(depth, "this");
+        } else {
+            return global->get(expr->keyword);
         }
     }
     std::any visitIfStmt(IfStmt* stmt) override {

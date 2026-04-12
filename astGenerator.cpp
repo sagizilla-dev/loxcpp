@@ -103,6 +103,7 @@ int main() {
         {"Call", {{"Expr*", "callee"}, {"Token", "paren"}, {"std::vector<Expr*>", "arguments"}}},
         {"Get", {{"Expr*", "object"}, {"Token", "name"}}}, // this expression gives us properties/fields
         {"Set", {{"Expr*", "object"}, {"Token", "name"}, {"Expr*", "value"}}}, // this expression allows us to set properties/fields 
+        {"This", {{"Token", "keyword"}}}
     });
     defineAST(file, "Stmt", {
         {"Print", {{"Expr*", "expr"}}},
