@@ -109,6 +109,7 @@ class PrintStmt;
 class ExpressionStmt;
 class VarDeclarationStmt;
 class FunDeclarationStmt;
+class ClassDeclarationStmt;
 class WhileStmt;
 class BlockStmt;
 class IfStmt;
@@ -119,6 +120,7 @@ public:
 	virtual std::any visitExpressionStmt(ExpressionStmt* expr) = 0;
 	virtual std::any visitVarDeclarationStmt(VarDeclarationStmt* expr) = 0;
 	virtual std::any visitFunDeclarationStmt(FunDeclarationStmt* expr) = 0;
+	virtual std::any visitClassDeclarationStmt(ClassDeclarationStmt* expr) = 0;
 	virtual std::any visitWhileStmt(WhileStmt* expr) = 0;
 	virtual std::any visitBlockStmt(BlockStmt* expr) = 0;
 	virtual std::any visitIfStmt(IfStmt* expr) = 0;
@@ -165,6 +167,16 @@ public:
 	std::vector<Stmt*> body;
 	std::any accept(StmtVisitor* visitor) override {
 		return visitor->visitFunDeclarationStmt(this);
+	}
+};
+class ClassDeclarationStmt: public Stmt{
+public:
+	ClassDeclarationStmt(Token name, std::vector<FunDeclarationStmt*> methods): name(name), methods(methods) {
+	}
+	Token name;
+	std::vector<FunDeclarationStmt*> methods;
+	std::any accept(StmtVisitor* visitor) override {
+		return visitor->visitClassDeclarationStmt(this);
 	}
 };
 class WhileStmt: public Stmt{

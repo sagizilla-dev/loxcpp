@@ -6,7 +6,8 @@
     BNF to define metasyntax for our grammar:
 
     program         -> declaration* END;
-    declaration     -> varDeclaration | funDeclaration | statement;
+    declaration     -> varDeclaration | funDeclaration | classDeclaration | statement;
+    classDeclaration-> "class" IDENTIFIER "{" function* "}";
     funDeclaration  -> "fun" function;
     function        -> IDENTIFIER "(" parameters? ")" blockStatement;
     parameters      -> IDENTIFIER ("," IDENTIFIER )*;
@@ -106,6 +107,7 @@ int main() {
         {"Expression", {{"Expr*", "expr"}}},
         {"VarDeclaration", {{"Token", "name"}, {"Expr*", "initializer"}}},
         {"FunDeclaration", {{"Token", "name"}, {"std::vector<Token>", "parameters"}, {"std::vector<Stmt*>", "body"}}},
+        {"ClassDeclaration", {{"Token", "name"}, {"std::vector<FunDeclarationStmt*>", "methods"}}},
         {"While", {{"Expr*", "condition"}, {"Stmt*", "body"}}},
         {"Block", {{"std::vector<Stmt*>", "statements"}}},
         {"If", {{"Expr*", "condition"}, {"Stmt*", "thenStatement"}, {"Stmt*", "elseStatement"}}},

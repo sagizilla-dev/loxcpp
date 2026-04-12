@@ -53,6 +53,11 @@ public:
         resolveFunction(stmt, FUNCTION_TYPE::FUNCTION);
         return std::any{};
     }
+    std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
+        declare(stmt->name);
+        define(stmt->name);
+        return std::any{};
+    }
     void resolveFunction(FunDeclarationStmt* stmt, FUNCTION_TYPE type) {
         FUNCTION_TYPE enclosing = currentFunction;
         currentFunction = type;
@@ -85,7 +90,7 @@ public:
     }
     std::any visitReturnStmt(ReturnStmt* stmt) override {
         if (currentFunction!=FUNCTION) {
-            throw ResolverError(stmt->keyword.line, "Cannot return from top-level code");
+            std::cerr<<ResolverError(stmt->keyword.line, "Cannot return from top-level code").what()<<'\n';
         }
         if (stmt->value) {
             resolve(stmt->value);
@@ -127,7 +132,7 @@ public:
     }
     std::any visitVariableExpr(VariableExpr* expr) override {
         if (!scopes.empty() && scopes.back().count(expr->name.lexeme) && scopes.back()[expr->name.lexeme]==false) {
-            throw ResolverError(expr->name.line, "Cannot read local variable in its own initializer");
+            std::cout<<ResolverError(expr->name.line, "Cannot read local variable in it's own initializer").what()<<'\n';
         }
         resolveLocal(expr, expr->name);
         return std::any{};
@@ -149,7 +154,7 @@ public:
             return;
         }
         if (scopes.back().count(name.lexeme)) {
-            throw ResolverError(name.line, "Redefinition of a variable within a local scope is not allowed");
+            std::cerr<<ResolverError(name.line, "Redefinition of a variable within a local scope is not allowed").what()<<'\n';
         }
         (scopes.back())[name.lexeme]=false; // the variable is declared in this scope, but hasn't been resolved
     }

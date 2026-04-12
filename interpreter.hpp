@@ -5,6 +5,7 @@
 #include "ast.hpp"
 #include "environment.hpp"
 #include "callable.hpp"
+#include "class.hpp"
 
 class Interpreter; // forward declaration
 
@@ -176,6 +177,13 @@ public:
         // if a variable has never been initiaized, we assign nil to it
         env->define(stmt->name.lexeme, value);
         return nullptr;
+    }
+    std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
+        env->define(stmt->name.lexeme, std::any{});
+        Callable* klass = new Class(stmt->name.lexeme);
+        env->assign(stmt->name, klass);
+        // two-stage variable binding allows class' methods to refer to the class itself
+        return std::any{};
     }
     std::any visitVariableExpr(VariableExpr* expr) override {
         if (locals.count(expr)) {

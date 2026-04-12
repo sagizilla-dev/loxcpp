@@ -26,6 +26,9 @@ struct Parser {
                 // since methods and functions are declared slightly differently
                 return funDeclaration("function");
             }
+            if (match({CLASS})) {
+                return classDeclaration();
+            }
             return statement();
         } catch (const SyntaxError& e) {
             std::cerr<<e.what()<<'\n';
@@ -33,6 +36,16 @@ struct Parser {
             synchronize();
             return nullptr;
         }
+    }
+    Stmt* classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expected class name");
+        consume(LEFT_BRACE, "Expected { before class body");
+        std::vector<FunDeclarationStmt*> methods;
+        while (!checkTokenType(RIGHT_BRACE) && !isAtEnd()) {
+            methods.push_back(static_cast<FunDeclarationStmt*>(funDeclaration("method")));
+        }
+        consume(RIGHT_BRACE, "Expected } after class body");
+        return new ClassDeclarationStmt(name, methods);
     }
     Stmt* funDeclaration(std::string kind) {
         Token name = consume(IDENTIFIER, "Expected " + kind + " name");

@@ -22,6 +22,9 @@ int main(int argc, char** argv) {
     Interpreter interpreter;
     Resolver resolver(&interpreter);
     resolver.resolve(statements);
+    if (ResolverError::errorFound) {
+        exit(1);
+    }
     interpreter.interpret(statements);
     if (RuntimeError::errorFound) {
         exit(1);
