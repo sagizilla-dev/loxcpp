@@ -1,4 +1,9 @@
-class Bagel {}
-var bagel = Bagel();
-bagel.withBacon = true;
-print(bagel.bacon);
+class Bacon {
+  eat() {
+    print(hello);
+  }
+}
+var hello = "hello";
+
+var bacon = Bacon();
+bacon.eat();

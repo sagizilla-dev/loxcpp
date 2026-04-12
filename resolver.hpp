@@ -56,6 +56,9 @@ public:
     std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
         declare(stmt->name);
         define(stmt->name);
+        for (auto method: stmt->methods) {
+            resolveFunction(method, METHOD);
+        }
         return std::any{};
     }
     void resolveFunction(FunDeclarationStmt* stmt, FUNCTION_TYPE type) {

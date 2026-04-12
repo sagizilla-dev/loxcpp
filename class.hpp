@@ -3,10 +3,12 @@
 #include "config.hpp"
 #include "callable.hpp"
 class Interpreter;
+class Function;
 class Class: public Callable {
 public:
     std::string name;
-    Class(std::string name): name(name) {
+    std::unordered_map<std::string, Callable*> methods;
+    Class(std::string name, std::unordered_map<std::string, Callable*> methods): name(name), methods(methods)  {
 
     }
     std::string toString() {
@@ -15,6 +17,12 @@ public:
     std::any call(Interpreter* interpreter, std::vector<std::any> arguments);
     int arity() {
         return 0;
+    }
+    Callable* findMethod(std::string name) {
+        if (methods.count(name)) {
+            return methods[name];
+        }
+        return nullptr;
     }
 };
 class ClassInstance {
@@ -30,6 +38,10 @@ public:
     std::any get(Token name) {
         if (fields.count(name.lexeme)) {
             return fields[name.lexeme];
+        }
+        Callable* method = klass->findMethod(name.lexeme);
+        if (method) {
+            return method;
         }
         throw RuntimeError(name.line, "Undefined property '"+name.lexeme+"'");
     }

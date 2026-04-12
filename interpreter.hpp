@@ -180,9 +180,13 @@ public:
     }
     std::any visitClassDeclarationStmt(ClassDeclarationStmt* stmt) override {
         env->define(stmt->name.lexeme, std::any{});
-        Callable* klass = new Class(stmt->name.lexeme);
-        env->assign(stmt->name, klass);
+        std::unordered_map<std::string, Callable*> methods;
+        for (auto method: stmt->methods) {
+            methods[method->name.lexeme]=(new Function(method, env));
+        }
+        Callable* klass = new Class(stmt->name.lexeme, methods);
         // two-stage variable binding allows class' methods to refer to the class itself
+        env->assign(stmt->name, klass);
         return std::any{};
     }
     std::any visitVariableExpr(VariableExpr* expr) override {
@@ -250,7 +254,7 @@ public:
         return std::any{};
     }
     std::any visitCallExpr(CallExpr* expr) override {
-        std::any callee = evaluate(expr->callee); // used to evaluate things like getCallee()()()...
+        std::any callee = evaluate(expr->callee); // is used to evaluate things like getCallee()()()...
         std::vector<std::any> arguments;
         for (auto arg: expr->arguments) {
             arguments.push_back(evaluate(arg));
